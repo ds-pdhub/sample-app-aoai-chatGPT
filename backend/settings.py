@@ -65,6 +65,18 @@ class _ChatHistorySettings(BaseSettings):
     conversations_container: str
     enable_feedback: bool = False
 
+class _PermitMetaDataSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="AZURE_COSMOSDB_",
+        env_file=DOTENV_PATH,
+        extra="ignore",
+        env_ignore_empty=True
+    )
+
+    permit_database: str
+    account: str
+    account_key: Optional[str] = None
+    permit_container: str
 
 class _PromptflowSettings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -771,6 +783,7 @@ class _AppSettings(BaseModel):
     
     # Constructed properties
     chat_history: Optional[_ChatHistorySettings] = None
+    permit_metadata: Optional[_PermitMetaDataSettings] = None
     datasource: Optional[DatasourcePayloadConstructor] = None
     promptflow: Optional[_PromptflowSettings] = None
 
@@ -793,7 +806,17 @@ class _AppSettings(BaseModel):
             self.chat_history = None
         
         return self
-    
+
+    @model_validator(mode="after")
+    def set_permit_metadata_settings(self) -> Self:
+        try:
+            self.permit_metadata = _PermitMetaDataSettings()
+
+        except ValidationError:
+            self.permit_metadata = None
+
+        return self
+
     @model_validator(mode="after")
     def set_datasource_settings(self) -> Self:
         try:

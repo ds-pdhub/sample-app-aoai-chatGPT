@@ -23,7 +23,7 @@ from azure.identity.aio import (
 )
 from backend.auth.auth_utils import get_authenticated_user_details
 from backend.security.ms_defender_utils import get_msdefender_user_json
-from backend.history.cosmosdbservice import CosmosConversationClient
+from backend.history.cosmosdbservice import CosmosConversationClient, CosmosPermitMetaData
 from backend.settings import (
     app_settings,
     MINIMUM_SUPPORTED_AZURE_OPENAI_PREVIEW_API_VERSION
@@ -50,6 +50,8 @@ def create_app():
     async def init():
         try:
             app.cosmos_conversation_client = await init_cosmosdb_client()
+            app.cosmos_permitmetadata_client = await init_permit_cosmosdb_client()
+
             cosmos_db_ready.set()
         except Exception as e:
             logging.exception("Failed to initialize CosmosDB client")
@@ -229,13 +231,44 @@ async def init_cosmosdb_client():
                 enable_message_feedback=app_settings.chat_history.enable_feedback,
             )
         except Exception as e:
-            logging.exception("Exception in CosmosDB initialization", e)
+            logging.exception("Exception in CosmosDB initialization %s", e)
             cosmos_conversation_client = None
             raise e
     else:
         logging.debug("CosmosDB not configured")
 
     return cosmos_conversation_client
+
+async def init_permit_cosmosdb_client():
+    cosmos_permit_metadata_client = None
+    if app_settings.chat_history:
+        try:
+            cosmos_endpoint = (
+                f"https://{app_settings.permit_metadata.account}.documents.azure.com:443/"
+            )
+
+            if not app_settings.permit_metadata.account_key:
+                async with DefaultAzureCredential() as cred:
+                    credential = cred
+
+            else:
+                credential = app_settings.permit_metadata.account_key
+
+            cosmos_permit_metadata_client = CosmosPermitMetaData(
+                cosmosdb_endpoint=cosmos_endpoint,
+                credential=credential,
+                database_name=app_settings.permit_metadata.permit_database,
+                container_name=app_settings.permit_metadata.permit_container
+            )
+
+        except Exception as e:
+            logging.exception("Exception in Permit CosmosDB initialization %s", e)
+            cosmos_permit_metadata_client = None
+            raise e
+    else:
+        logging.debug("Permit CosmosDB not configured")
+
+    return cosmos_permit_metadata_client
 
 
 def prepare_model_args(request_body, request_headers):
