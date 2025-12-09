@@ -3,6 +3,7 @@ import yaml
 from typing import Literal, Optional
 
 class AgentConfiguration:
+    
     def __init__(self, file_path: str = 'config.yaml'):
         self.file_path = file_path
         with open(self.file_path, 'r') as file:
