@@ -1,6 +1,7 @@
 import os
 
 from datetime import datetime
+
 from src.permit_agent.backend import AzureAISearch
 from src.utils.config import AgentConfiguration
 
@@ -14,20 +15,17 @@ from typing import Optional, Literal
 
 from dotenv import load_dotenv
 
-from openai import OpenAI
-
 from azure.cosmos import CosmosClient
 
 load_dotenv()
 
-METADATA_DATABASE = "data/metadata_document.db"
 cosmos_client = CosmosClient(
     url=os.getenv("COSMOS_DB_URI"),
     credential=os.getenv("COSMOS_DB_KEY")
 )
 
-database_id = "permitMetadataDB"
-container_id = "permitMetadataContainer"
+database_id = os.getenv("COSMOS_DB_DATABASE_ID")
+container_id = os.getenv("COSMOS_DB_CONTAINER_ID")
 
 database = cosmos_client.get_database_client(database_id)
 container = database.get_container_client(container_id)
@@ -45,11 +43,6 @@ llm = AzureChatOpenAI(
     max_tokens=1000,
     timeout=500,
     max_retries=2
-)
-
-client = OpenAI(
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    base_url=f"{os.getenv('AZURE_OPENAI_ENDPOINT')}/openai/v1/",
 )
 
 retrieval_client = AzureAISearch(
@@ -131,7 +124,7 @@ def get_current_date():
 
 @tool
 async def get_list_documents_by_issue_year(
-                permit_type: Literal['PLO', 'KKPR/KKPRL', 'Ijin Lingkungan'] = None,
+                permit_type: Literal['PLO', 'KKPR', 'KKPRL', 'Ijin Lingkungan'] = None,
                 year: int = None,
                 organization: Optional[str] = None, 
                 operator: Literal['equal', 'greater', 'less'] = None,
@@ -146,7 +139,7 @@ async def get_list_documents_by_issue_year(
     """
     
     query = """
-        SELECT c.documentTitle, c.permitType, c.organization, 
+        SELECT c.documentTitle, c.permitType, c.organization, c.filepath,
                p.issueDate, p.permitSummary, p.permitNumber
         FROM c
         JOIN p IN c.permits
@@ -213,7 +206,8 @@ async def get_list_documents_by_issue_year(
     for item in items:
         result_list.append(
             f"- {item['documentTitle']} - {item['permitNumber']} "
-            f"(Org: {item['organization']}, Issue Date: {item['issueDate']})"
+            f"\n  (Org: {item['organization']}, Issue Date: {item['issueDate']})"
+            f"\n  Document path: {item.get('filepath', 'N/A')} "
             f"\n  Summary: {item['permitSummary']}"
         )
 
@@ -238,7 +232,7 @@ async def get_list_documents_by_expiration_year(
     """
     
     query = """
-        SELECT c.documentTitle, c.permitType, c.organization, 
+        SELECT c.documentTitle, c.permitType, c.organization, c.filepath,
                p.expirationDate, p.permitSummary, p.permitNumber
         FROM c
         JOIN p IN c.permits
@@ -303,7 +297,8 @@ async def get_list_documents_by_expiration_year(
     for item in items:
         result_list.append(
             f"- {item['documentTitle']} - {item['permitNumber']} "
-            f"(Org: {item['organization']}, Expires: {item['expirationDate']})"
+            f"\n  (Org: {item['organization']}, Expires: {item['expirationDate']})"
+            f"\n  Document path: {item.get('filepath', 'N/A')} "
             f"\n  Summary: {item['permitSummary']}"
         )
 
@@ -370,7 +365,8 @@ async def get_list_documents_already_expired(
     for item in items:
         result_list.append(
             f"- {item['documentTitle']} - Permit Number: {item['permitNumber']} "
-            f"(Org: {item['organization']}, Installation {item.get('installation', 'N/A')}, Expired: {item['expirationDate']})"
+            f"\n  (Org: {item['organization']}, Installation {item.get('installation', 'N/A')}, Expired: {item['expirationDate']})"
+            f"\n  Document path: {item.get('filepath', 'N/A')} "
             f"\n  Summary: {item['permitSummary']}"
         )
 
@@ -379,7 +375,7 @@ async def get_list_documents_already_expired(
 @tool
 async def get_list_all_documents_by_organization(
                 organization: Optional[str] = None,
-                permit_type: Optional[Literal['PLO', 'KKPR/KKPRL', 'Ijin Lingkungan']]= None      
+                permit_type: Optional[Literal['PLO', 'KKPR', 'KKPRL', 'Ijin Lingkungan']]= None      
 ):
     """
     Get list of all documents by organization.
@@ -433,7 +429,8 @@ async def get_list_all_documents_by_organization(
     for item in items:
         result_list.append(
             f"{item['documentTitle']} - {item['permitNumber']} "
-            f"(Org: {item['organization']}, Issue Date: {item['issueDate']}, Expiration Date: {item['expirationDate']})"
+            f"\n  (Org: {item['organization']}, Issue Date: {item['issueDate']}, Expiration Date: {item['expirationDate']})"
+            f"\n  Document path: {item.get('filepath', 'N/A')} "
             f"\nSummary: {item['permitSummary']}"
         )
 
