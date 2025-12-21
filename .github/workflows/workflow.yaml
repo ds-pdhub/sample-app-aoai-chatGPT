@@ -39,7 +39,23 @@ jobs:
     uses: actions/setup-python@v1
     with:
      python-version: ${{ env.PYTHON_VERSION }}
-  # install dependencies
+
+  # setup node for frontend build
+  - name: Setup Node.js
+    uses: actions/setup-node@v3
+    with:
+      node-version: '18'
+      cache: 'npm'
+      cache-dependency-path: frontend/package-lock.json
+  
+  # build frontend
+  - name: Build frontend
+    working-directory: frontend
+    run: |
+      npm ci
+      npm run build
+  
+  # install python dependencies
   - name: python install
     working-directory: ${{ env.WORKING_DIRECTORY }}
     run: |
@@ -61,11 +77,22 @@ jobs:
      app-name: ${{ env.AZURE_WEBAPP_NAME }}
      mask-inputs: false
      general-settings-json: '{"linuxFxVersion": "PYTHON|${{ env.PYTHON_VERSION }}"}' #'General configuration settings as Key Value pairs'
+  # create deployment package
+  - name: Create deployment package
+    run: |
+      mkdir -p deploy
+      cp -r backend deploy/
+      cp -r static deploy/
+      cp app.py deploy/
+      cp requirements.txt deploy/
+      cp gunicorn.conf.py deploy/
+      cp .env deploy/ || true
+      
   # deploy web app
   - uses: azure/webapps-deploy@v2
     with:
      app-name: ${{ env.AZURE_WEBAPP_NAME }}
-     package: ${{ env.WORKING_DIRECTORY }}
+     package: deploy
      startup-command: ${{ env.STARTUP_COMMAND }}
   # Azure logout
   - name: logout
