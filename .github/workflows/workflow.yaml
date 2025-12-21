@@ -18,9 +18,9 @@ on:
 # 2. Change these variables for your configuration:
 
 env:
-  AZURE_WEBAPP_NAME: chatbot-perijinan      # set this to your application's name
+  AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEB_APP_NAME }}      # set this to your application's name
   WORKING_DIRECTORY: '.'                    # set this to the path to your path of working directory inside github repository, defaults to the repository root
-  PYTHON_VERSION: '3.12'                    # set the version to use
+  PYTHON_VERSION: ${{ vars.PYTHON_VERSION }}                    # set the version to use
   STARTUP_COMMAND: 'python3 -m gunicorn app:app'  # set this to the startup command required to start the gunicorn server. default it is empty
 
 jobs:
