@@ -87,7 +87,6 @@ jobs:
       cp app.py deploy/
       cp requirements.txt deploy/
       cp gunicorn.conf.py deploy/
-      cp .env deploy/ || true
       
   # deploy web app
   - uses: azure/webapps-deploy@v2
