@@ -598,7 +598,7 @@ class CosmosPermitMetaData():
             results = cosmos_client.container_client.query_items(
                 query=query_with_condition,
                 parameters=parameters,
-                enable_cross_partition_query=True
+                #enable_cross_partition_query=True
             )
 
             items = []
