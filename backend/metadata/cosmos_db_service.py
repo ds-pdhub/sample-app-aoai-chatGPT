@@ -114,7 +114,8 @@ class CosmosPermitMetaData():
         """
         try:
             query = """
-                SELECT c.id, c.documentTitle, c.permitType, c.organization, c.filepath, c.permits, c.keywords
+                SELECT c.id, c.documentTitle, c.permitType, c.organization, c.filepath, c.permits,
+                p.issueDate, c.keywords
                 FROM c
                 JOIN p IN c.permits
                 WHERE p.issueDate != ""
