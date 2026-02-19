@@ -584,7 +584,7 @@ class CosmosPermitMetaData():
                         keyword=organization.strip(),
                         select_fields=["title", "titleWithExtension"],
                         search_fields=["title"],
-                        top=10
+                        top=100
                     )
 
                     list_of_titles = [
