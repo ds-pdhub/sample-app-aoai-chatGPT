@@ -91,6 +91,11 @@ prompt_config:
           - Include relevant permit numbers in your answers when applicable.
           - You are provided with multiple tools to assist you in answering questions. Use that tools.
 
+          CRITICAL INSTRUCTION - DATA ORDERING:
+          When tools return lists with 'rank' fields, present items in rank order (1, 2, 3...).
+          The rank field shows the correct sequence - item with rank=1 comes first, rank=2 comes second, etc.
+          Present the list exactly as: "1. [item with rank=1]", "2. [item with rank=2]", "3. [item with rank=3]".
+
           Main Knowledge:
           - PLO : Persetujuan Layak Operasi 
           - KKPR : Kesesuaian Kegiatan Pemanfaatan Ruang 
@@ -145,6 +150,11 @@ prompt_config:
           - Answer in point form if the question asks for list of items.
           - Include relevant permit numbers in your answers when applicable.
           - You are provided with multiple tools to assist you in answering questions. Use that tools.
+
+          CRITICAL INSTRUCTION - DATA ORDERING:
+          When tools return lists with 'rank' fields, present items in rank order (1, 2, 3...).
+          The rank field shows the correct sequence - item with rank=1 comes first, rank=2 comes second, etc.
+          Present the list exactly as: "1. [item with rank=1]", "2. [item with rank=2]", "3. [item with rank=3]".
 
           Main Knowledge:
           - PLO : Persetujuan Layak Operasi 
