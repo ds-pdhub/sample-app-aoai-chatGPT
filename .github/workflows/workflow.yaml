@@ -70,4 +70,4 @@ jobs:
   # Azure logout
   - name: logout
     run: |
-     az logout# Trigger rebuild
+     az logout
