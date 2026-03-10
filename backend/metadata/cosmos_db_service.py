@@ -114,7 +114,8 @@ class CosmosPermitMetaData():
         """
         try:
             query = """
-                SELECT c.id, c.documentTitle, c.permitType, c.organization, c.filepath, c.permits, c.keywords
+                SELECT c.id, c.documentTitle, c.permitType, c.organization, c.filepath, c.permits,
+                p.issueDate, c.keywords
                 FROM c
                 JOIN p IN c.permits
                 WHERE p.issueDate != ""
@@ -207,13 +208,17 @@ class CosmosPermitMetaData():
 
             filtered_items = items[:doc_len]
             result_list: list[dict]= []
-            for item in filtered_items:
+            for idx, item in enumerate(filtered_items, start=1):
                 if item['permitType'] == 'PLO':
                     permit = PLOMetaDataInDB(**item)
                 else:
                     permit = PermitMetaDataInDB(**item)
 
-                result_list.append(permit.to_dict())
+                permit_dict = permit.to_dict()
+                permit_dict['rank'] = idx
+                permit_dict['expiration_order_note'] = f"Rank #{idx}: Expired on {item.get('expirationDate', 'N/A')}"
+
+                result_list.append(permit_dict)
 
             return json.dumps(result_list)
 
@@ -325,13 +330,17 @@ class CosmosPermitMetaData():
                 items.sort(key=lambda x: x.get('expirationDate', ''))
 
             result_list: list[dict]= []
-            for item in items:
+            for idx, item in enumerate(items, start=1):
                 if item['permitType'] == 'PLO':
                     permit = PLOMetaDataInDB(**item)
                 else:
                     permit = PermitMetaDataInDB(**item)
 
-                result_list.append(permit.to_dict())
+                permit_dict = permit.to_dict()
+                permit_dict['rank'] = idx
+                permit_dict['expiration_order_note'] = f"Rank #{idx}: Expired on {item.get('expirationDate', 'N/A')}"
+
+                result_list.append(permit_dict)
 
             return json.dumps(result_list)
 
@@ -375,11 +384,10 @@ class CosmosPermitMetaData():
             parameters: list[dict[str, object]] = [{"name": "@currentDate", "value": current_date}]
 
             query = """
-                SELECT c.id, c.documentTitle, c.permitType, c.organization, c.filepath, c.permits, c.keywords
+                SELECT c.id, c.documentTitle, c.permitType, c.organization, c.filepath, c.permits, c.keywords, p.expirationDate
                 FROM c
                 JOIN p in c.permits
-                WHERE p.expirationDate < @currentDate AND
-                    c.permitType = 'PLO'
+                WHERE p.expirationDate < @currentDate AND c.permitType = 'PLO'
                 """
 
             if organization:
@@ -423,13 +431,17 @@ class CosmosPermitMetaData():
                 items.sort(key=lambda x: x.get('expirationDate', ''))
 
             result_list: list[dict]= []
-            for item in items:
+            for idx, item in enumerate(items, start=1):
                 if item['permitType'] == 'PLO':
                     permit = PLOMetaDataInDB(**item)
                 else:
                     permit = PermitMetaDataInDB(**item)
 
-                result_list.append(permit.to_dict())
+                permit_dict = permit.to_dict()
+                permit_dict['rank'] = idx
+                permit_dict['expiration_order_note'] = f"Rank #{idx}: Expired on {item.get('expirationDate', 'N/A')}"
+
+                result_list.append(permit_dict)
 
             return json.dumps(result_list)
 
@@ -583,7 +595,7 @@ class CosmosPermitMetaData():
                         keyword=organization.strip(),
                         select_fields=["title", "titleWithExtension"],
                         search_fields=["title"],
-                        top=10
+                        top=100
                     )
 
                     list_of_titles = [
