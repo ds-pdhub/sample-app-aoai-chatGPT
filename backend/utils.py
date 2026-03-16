@@ -22,7 +22,8 @@ METADATA_TOOLS = [
     'get_list_documents_by_expiration_year',
     'get_list_documents_already_expired',
     'get_list_all_documents_by_organization',
-    'get_list_document_by_expiration_interval'
+    'get_list_document_by_expiration_interval',
+    'get_list_document_by_timespan_expiration_interval'
 ]
 
 class JSONEncoder(json.JSONEncoder):

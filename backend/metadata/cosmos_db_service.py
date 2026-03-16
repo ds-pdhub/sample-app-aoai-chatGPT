@@ -555,6 +555,133 @@ class CosmosPermitMetaData():
             logging.error("Error - get_list_document_by_expiration_interval: %s", str(e))
             return f"Error: {str(e)}"
 
+    async def get_list_document_by_timespan_expiration_interval(
+            self,
+            year: int = datetime.today().year,
+            timespan: Literal[
+                'q1', 'q2', 'q3','q4',
+                'tw1', 'tw2', 'tw3', 'tw4',
+                'h1', 'h2'] = 'tw1',
+            organization: Optional[str] = None,
+            permit_type: Literal['PLO'] = 'PLO'
+    ):
+        """
+        Get list of documents expiring in the given timespan and spesific year asked by user, optionally filtered by organization.
+
+        Args:
+            year (int): Target year (e.g., 2021).
+            timespan (str): Timespan to filter by (e.g, tw1, q1, h1).
+            organization (str, optional): Organization to filter by.
+            permit_type (str, optional): Type of permit to filter by. PLO document types only.
+        """
+        try:
+
+            ts = ''
+            if timespan in ['q1', 'tw1']:
+                ts = '(1, 2, 3)'
+            if timespan in ['q2', 'tw2']:
+                ts = '(4, 5, 6)'
+            if timespan in ['q3', 'tw3']:
+                ts = '(7, 8, 9)'
+            if timespan in ['q4', 'tw4']:
+                ts = '(10, 11, 12)'
+            if timespan == 'h1':
+                ts = '(1, 2, 3, 4, 5, 6)'
+            if timespan ==  'h2':
+                ts = '(7, 8, 9, 10, 11, 12)'
+
+            query = """
+                SELECT c.id, c.filepath, c.documentTitle, c.organization, c.keywords, c.permitType, c.permits,
+                p.expirationDate, p.issueDate 
+                FROM c
+                JOIN p in c.permits
+                WHERE YEAR(p.expirationDate) = @year
+                AND c.permitType = @documentType
+                """
+
+            conditions = []
+            parameters = []
+
+            parameters.append(dict(name="@year", value=year))
+            parameters.append(dict(name="@ts", value=ts))
+            parameters.append(dict(name="@documentType", value=permit_type))
+
+            if timespan in ['q1', 'tw1']:
+                conditions.append("Month(p.expirationDate) IN (1, 2, 3)")
+            if timespan in ['q2', 'tw2']:
+                conditions.append("Month(p.expirationDate) IN (4, 5, 6)")
+            if timespan in ['q3', 'tw3']:
+                conditions.append("Month(p.expirationDate) IN (7, 8, 9)")
+            if timespan in ['q4', 'tw4']:
+                conditions.append("Month(p.expirationDate) IN (10, 11, 12)")
+            if timespan == 'h1':
+                conditions.append("Month(p.expirationDate) IN (1, 2, 3, 4, 5, 6)")
+            if timespan ==  'h2':
+                conditions.append("Month(p.expirationDate) IN (7, 8, 9, 10, 11, 12)")
+
+            if organization:
+                await self._ensure_main_organizations_loaded()
+                if organization.strip() in self.main_organization:
+                    conditions.append("c.organization = @organization")
+                    parameters.append(dict(name="@organization", value=organization))
+                else:
+                    title_file_search = await title_search_client.full_text_search(
+                        keyword=organization.strip(),
+                        select_fields=["title", "titleWithExtension"],
+                        search_fields=["title"],
+                        top=10
+                    )
+
+                    list_of_titles = [
+                        doc['titleWithExtension'] for doc in title_file_search['value']
+                    ]
+
+                    title_str = ",".join([f"'{t}'" for t in list_of_titles])
+                    conditions.append(f"c.documentTitle IN ({title_str})")
+
+            if conditions:
+                query += " AND " + " AND ".join(conditions)
+
+            results = self.container_client.query_items(
+                query=query,
+                parameters=parameters
+            )
+
+            items = []
+            async for item in results:
+                items.append(item)
+
+            if not items:
+                # return f"No documents found expiring in the next {months_ahead} months."
+                return json.dumps([])
+
+            result_list: list[dict]= []
+            for item in items:
+                if item['permitType'] == 'PLO':
+                    permit = PLOMetaDataInDB(**item)
+                else:
+                    permit = PermitMetaDataInDB(**item)
+
+                result_list.append(permit.to_dict())
+
+            return json.dumps(result_list)
+
+        except ValidationError as e:
+            logging.error("Error - validation - get_list_document_by_timespan_expiration_interval: %s", str(e))
+            return f"Validation Error: {str(e)}"
+
+        except exceptions.CosmosResourceNotFoundError as e:
+            logging.error("Error - DB - get_list_document_by_timespan_expiration_interval: %s", str(e))
+            return f"Error at DB: {str(e)}"
+
+        except exceptions.CosmosHttpResponseError as e:
+            logging.error("Error - DB - get_list_document_by_timespan_expiration_interval: %s", str(e))
+            return f"Error at DB: {str(e)}"
+
+        except Exception as e:
+            logging.error("Error - get_list_document_by_timespan_expiration_interval: %s", str(e))
+            return f"Error: {str(e)}"
+
     async def get_list_all_documents_by_organization(
             self,
             organization: str,
