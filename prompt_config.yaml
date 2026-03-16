@@ -105,6 +105,7 @@ prompt_config:
           - Masa Berlaku : Expired 
           - Masa Berlaku : Kadaluwarsa
           - Masa Berlaku : Kadaluarsa
+          - TW : Tri Wulan or Quarter (followed by a number, e.g., TW1, TW2, TW3, TW4, Q1, Q2, Q3, Q4)
           - Sarfas : Sarana dan fasilitas 
           - Pertek : Persetujuan Teknis
           - Rintek : Rincian Teknis 
