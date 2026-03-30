@@ -109,6 +109,33 @@ async def get_list_document_by_expiration_interval(
         permit_type=permit_type
     )
 
+
+@tool
+async def get_list_document_by_timespan_expiration_interval(
+            year: int = datetime.today().year,
+            timespan: Literal[
+                'q1', 'q2', 'q3','q4',
+                'tw1', 'tw2', 'tw3', 'tw4',
+                'h1', 'h2'] = 'tw1',
+            organization: Optional[str] = None,
+            permit_type: Literal['PLO'] = 'PLO'
+    ):
+    """
+        Get list of documents expiring in the given timespan and spesific year asked by user, optionally filtered by organization.
+
+        Args:
+            year (int): Target year (e.g., 2021).
+            timespan (str): Timespan to filter by (e.g., tw1, q1, h1).
+            organization (str, optional): Organization to filter by.
+            permit_type (str, optional): Type of permit to filter by. PLO document types only.
+    """
+    return await cosmos_client.get_list_document_by_timespan_expiration_interval(
+        year=year,
+        timespan=timespan,
+        organization=organization,
+        permit_type=permit_type
+    )
+
 @tool
 async def get_list_documents_by_issue_year(
                 permit_type: Literal['PLO', 'KKPR', 'KKPRL', 'Ijin Lingkungan'] = None, #type: ignore
@@ -233,6 +260,7 @@ tools = [
         get_current_year_month,
         get_list_documents_by_issue_year,
         get_list_documents_by_expiration_year,
+        get_list_document_by_timespan_expiration_interval,
         get_list_document_by_expiration_interval,
         get_list_documents_already_expired,
         get_list_all_documents_by_organization
