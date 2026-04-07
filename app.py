@@ -135,6 +135,7 @@ frontend_settings = {
         "chat_logo": app_settings.ui.chat_logo or app_settings.ui.logo,
         "chat_title": app_settings.ui.chat_title,
         "chat_description": app_settings.ui.chat_description,
+        "chat_disclaimer": app_settings.ui.chat_disclaimer,
         "show_share_button": app_settings.ui.show_share_button,
         "show_chat_history_button": app_settings.ui.show_chat_history_button,
     },
