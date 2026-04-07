@@ -61,6 +61,18 @@
   color: #616161;
 }
 
+.chatEmptyStateDisclaimer {
+  margin-top: 0px;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 150%;
+  align-items: flex-end;
+  text-align: center;
+  letter-spacing: -0.01em;
+  color: #616161;
+}
+
 .chatIcon {
   height: 62px;
   width: auto;
